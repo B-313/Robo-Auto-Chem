@@ -17,8 +17,9 @@ from utils.UR_Functions import URfunctions as URControl
 # sys.path.append(current_dir)
 
 # open cv libraries
+import csv
 import cv2 as cv
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from utils.robotiq_gripper import RobotiqGripper
 
@@ -36,21 +37,19 @@ camera_index = 0
 record_seconds = 5   # recording duration
 
 
-import cv2 as cv
-import os
-import time
 
 # 1280x720 is HD
 
 def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, record_seconds=10):
-    # Path for saving the video
-    output_path = f"/home/robot/group_B/robo_chem_504/group_B_videos/{vial_number+1}.mp4"
-    
-    # Ensure the directory exists
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    base_dir   = "/home/robot/group_B/robo_chem_504/group_B_videos"
+    video_path = os.path.join(base_dir, f"{vial_number + 1}.mp4")
+    csv_path   = os.path.join(base_dir, f"{vial_number + 1}_log.csv")
+
+    # Ensure the output directory exists
+    os.makedirs(base_dir, exist_ok=True)
 
     # Open the camera
-    cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)  # Try V4L2 if GStreamer doesn't work well
+    cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)
 
     # Check if the camera opened successfully
     if not cap.isOpened():
@@ -60,10 +59,10 @@ def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, r
     # Set video capture resolution
     cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
-    
+
     # Verify if the camera supports the desired resolution
-    actual_width = cap.get(cv.CAP_PROP_FRAME_WIDTH)
-    actual_height = cap.get(cv.CAP_PROP_FRAME_HEIGHT)
+    actual_width  = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+    actual_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
 
     if actual_width != width or actual_height != height:
         print(f"Warning: Camera resolution set to {actual_width}x{actual_height} instead of {width}x{height}.")
@@ -72,13 +71,16 @@ def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, r
     cap.set(cv.CAP_PROP_FPS, fps)
 
     # Create VideoWriter object with desired codec
-    fourcc = cv.VideoWriter_fourcc(*'mp4v')  # Or use 'XVID'/'MJPG' if necessary
-    out = cv.VideoWriter(output_path, fourcc, fps, (int(actual_width), int(actual_height)))
+    fourcc = cv.VideoWriter_fourcc(*'mp4v')
+    out    = cv.VideoWriter(video_path, fourcc, fps, (actual_width, actual_height))
 
     # Start recording
     print(f"Recording for {record_seconds} seconds... Vial {vial_number + 1}")
 
-    start_time = time.time()
+    log         = []
+    start_time  = time.time()
+    frame_count = 0
+    recording_start = datetime.now()
 
     while True:
         ret, frame = cap.read()
@@ -88,11 +90,16 @@ def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, r
             print("Can't receive frame. Exiting...")
             break
 
+        elapsed = round(time.time() - start_time, 3)
+        ts = (recording_start + timedelta(seconds=elapsed)).strftime("%H:%M:%S.%f")[:-3]
+        log.append([ts, elapsed, frame_count])
+
         # Write the frame to the video file
         out.write(frame)
+        frame_count += 1
 
         # Stop after the specified recording duration
-        if time.time() - start_time > record_seconds:
+        if elapsed > record_seconds:
             break
 
     # Release everything once the recording is done
@@ -100,7 +107,14 @@ def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, r
     out.release()
     cv.destroyAllWindows()
 
-    print(f"Video saved to: {output_path}")
+    # Write per-frame log to CSV
+    with open(csv_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['timestamp', 'elapsed_s', 'frame'])
+        writer.writerows(log)
+
+    print(f"Video saved to: {video_path}")
+    print(f"Log  saved to: {csv_path}  ({len(log)} frames)")
 
 #if __name__ == "__main__":
 #    basic_recorder()
