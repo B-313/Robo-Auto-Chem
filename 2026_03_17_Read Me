@@ -1,0 +1,13 @@
+# robo_chem_504 - GROUP B
+
+**Test_position.py** is the main file that handles the robotic arm.
+
+**test_get_joints** is the get joints one.
+
+
+## **Activate the environment with:**
+
+```sh
+conda activate /home/robot/anaconda3/envs/ur5
+```
+
