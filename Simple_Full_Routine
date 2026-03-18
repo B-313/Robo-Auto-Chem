@@ -1,4 +1,5 @@
 
+
 ################
 # FULL ROUTINE #
 ################
@@ -23,6 +24,93 @@ from datetime import datetime, timedelta
 
 from utils.robotiq_gripper import RobotiqGripper
 
+
+##################
+# VIDEO SETTINGS #
+##################
+
+# Tweak these for your setup
+camera_index = 0
+width, height = 640, 480 
+fps = 30.0 
+record_seconds = 180  # Per vial
+
+def basic_recorder(vial_number, camera_index=camera_index, width=width, height=height, fps=fps, record_seconds=record_seconds):
+    base_dir = "/home/robot/group_B/robo_chem_504/group_B_videos"
+    video_path = os.path.join(base_dir, f"{vial_number + 1}.mp4")
+    csv_path = os.path.join(base_dir, f"{vial_number + 1}_colors.csv")  # Renamed for clarity
+
+    os.makedirs(base_dir, exist_ok=True)
+
+    cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)
+    if not cap.isOpened():
+        print("❌ Cannot open camera")
+        return
+
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
+    cap.set(cv.CAP_PROP_BUFFERSIZE, 1)  # No lag!
+    cap.set(cv.CAP_PROP_FPS, fps)
+
+    actual_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+    actual_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+    if actual_width != width or actual_height != height:
+        print(f"⚠️ Using {actual_width}x{actual_height}")
+
+    fourcc = cv.VideoWriter_fourcc(*'mp4v')
+    out = cv.VideoWriter(video_path, fourcc, fps, (actual_width, actual_height))
+
+    def detect_colour_in_frame(frame):
+        hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        color_ranges = {
+            'red': ((0, 70, 50), (10, 255, 255)),
+            'yellow': ((15, 150, 150), (35, 255, 255)),
+            'green': ((40, 70, 50), (90, 255, 255))
+        }
+        color_detection = {'red': 0, 'yellow': 0, 'green': 0}
+        for color, (lower, upper) in color_ranges.items():
+            mask = cv.inRange(hsv, lower, upper)
+            color_detection[color] = cv.countNonZero(mask)
+        return color_detection
+
+    print(f"🎥 Recording Vial {vial_number + 1} ({record_seconds}s)")
+    color_log = []
+    start_time = time.time()
+    frame_count = 0
+    recording_start = datetime.now()
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Frame lost.")
+            break
+
+        elapsed = round(time.time() - start_time, 3)
+        ts = (recording_start + timedelta(seconds=elapsed)).strftime("%H:%M:%S.%f")[:-3]
+        
+        colors = detect_colour_in_frame(frame)
+        color_log.append([ts, elapsed, frame_count, colors['red'], colors['yellow'], colors['green']])
+
+        out.write(frame)
+        frame_count += 1
+
+        if elapsed > record_seconds:
+            break
+
+    cap.release()
+    out.release()
+    cv.destroyAllWindows()
+
+    with open(csv_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['timestamp', 'elapsed_s', 'frame', 'red', 'yellow', 'green'])
+        writer.writerows(color_log)
+
+    print(f"✅ {video_path}")
+    print(f"✅ {csv_path} ({frame_count} frames)")
+
+
+'''
 ##################
 # VIDEO SETTINGS #
 ##################
@@ -74,6 +162,24 @@ def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, r
     fourcc = cv.VideoWriter_fourcc(*'mp4v')
     out    = cv.VideoWriter(video_path, fourcc, fps, (actual_width, actual_height))
 
+    def detect_colour_in_frame(frame):
+        hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+        color_ranges = {
+            'red': ((0, 70, 50), (10, 255, 255)),
+            'yellow': ((15, 150, 150), (35, 255, 255)),
+            'green': ((40, 70, 50), (90, 255, 255))
+        }
+        color_detection = {'red': 0, 'yellow': 0, 'green': 0}
+        for color, (lower, upper) in color_ranges.items():
+            mask = cv.inRange(hsv, lower, upper)
+            color_detection[color] = cv.countNonZero(mask)
+        return color_detection
+    
+    color_log = []  # Add this line
+
+
+
+
     # Start recording
     print(f"Recording for {record_seconds} seconds... Vial {vial_number + 1}")
 
@@ -94,6 +200,9 @@ def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, r
         ts = (recording_start + timedelta(seconds=elapsed)).strftime("%H:%M:%S.%f")[:-3]
         log.append([ts, elapsed, frame_count])
 
+        colors = detect_colour_in_frame(frame)
+        color_log.append([ts, elapsed, frame_count, colors['red'], colors['yellow'], colors['green']])
+
         # Write the frame to the video file
         out.write(frame)
         frame_count += 1
@@ -110,14 +219,15 @@ def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, r
     # Write per-frame log to CSV
     with open(csv_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['timestamp', 'elapsed_s', 'frame'])
-        writer.writerows(log)
+        writer.writerow(['timestamp', 'elapsed_s', 'frame', 'red', 'yellow', 'green'])
+        writer.writerows(color_log)
 
     print(f"Video saved to: {video_path}")
     print(f"Log  saved to: {csv_path}  ({len(log)} frames)")
 
 #if __name__ == "__main__":
 #    basic_recorder()
+'''
 
 #############
 # Positions #
