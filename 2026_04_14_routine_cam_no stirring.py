@@ -1,15 +1,16 @@
 
------------------------
+################
+# FULL ROUTINE #
 
-#############
-# ADD CAMERA HANDLER #
-#############
+# colour_detection_module.py used.
+################
 
 from PIL import ImageTk, Image
 import numpy as np
 import math
 import os
 import sys
+import time
 current_dir = os.path.dirname(os.path.abspath(__file__))
 from utils.UR_Functions import URfunctions as URControl
 # sys.path.append(os.path.join(current_dir, 'robotiq'))
@@ -17,8 +18,172 @@ from utils.UR_Functions import URfunctions as URControl
 # print(f"current_dir : {current_dir}")
 # sys.path.append(current_dir)
 
+# open cv libraries
+import cv2 as cv
+from datetime import datetime
+import csv
+
+from color_detection_module import detect_colour_in_frame
 
 from utils.robotiq_gripper import RobotiqGripper
+
+##################
+# VIDEO SETTINGS #
+##################
+
+video_name = 'hello.mp4'
+
+fps = 30.0
+delay = 30.0 / fps
+width = 1280
+height = 720
+camera_index = 0
+record_seconds = 5   # recording duration
+
+# 1280x720 is HD
+
+def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, record_seconds=10):
+    # Path for saving the video
+    output_path = f"/home/robot/group_B/robo_chem_504/group_B_videos/{vial_number+1}.mp4"
+    
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Open the camera
+    cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)  # Try V4L2 if GStreamer doesn't work well
+
+    # Check if the camera opened successfully
+    if not cap.isOpened():
+        print("Cannot open camera")
+        return
+
+    # Set video capture resolution
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
+    
+    # Verify if the camera supports the desired resolution
+    actual_width = cap.get(cv.CAP_PROP_FRAME_WIDTH)
+    actual_height = cap.get(cv.CAP_PROP_FRAME_HEIGHT)
+
+    if actual_width != width or actual_height != height:
+        print(f"Warning: Camera resolution set to {actual_width}x{actual_height} instead of {width}x{height}.")
+
+    # Set the FPS (frame rate)
+    cap.set(cv.CAP_PROP_FPS, fps)
+
+    # Create VideoWriter object with desired codec
+    fourcc = cv.VideoWriter_fourcc(*'mp4v')  # Or use 'XVID'/'MJPG' if necessary
+    out = cv.VideoWriter(output_path, fourcc, fps, (int(actual_width), int(actual_height)))
+
+    # Start recording
+    print(f"Recording for {record_seconds} seconds... Vial {vial_number + 1}")
+
+    start_time = time.time()
+
+    while True:
+        ret, frame = cap.read()
+
+        # If frame is not successfully captured, exit
+        if not ret:
+            print("Can't receive frame. Exiting...")
+            break
+
+        # Write the frame to the video file
+        out.write(frame)
+
+        # Stop after the specified recording duration
+        if time.time() - start_time > record_seconds:
+            break
+
+    # Release everything once the recording is done
+    cap.release()
+    out.release()
+    cv.destroyAllWindows()
+
+    print(f"Video saved to: {output_path}")
+
+
+def color_detection_recorder(
+    vial_number,
+    camera_index=0,
+    width=640,
+    height=480,
+    fps=30,
+    record_seconds=10,
+    min_pixels=800,
+):
+    output_dir = "/home/robot/group_B/robo_chem_504/group_B_videos"
+    video_path = f"{output_dir}/{vial_number+1}.mp4"
+    csv_path = f"{output_dir}/{vial_number+1}_colour_changes.csv"
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)
+    if not cap.isOpened():
+        print("Cannot open camera")
+        return
+
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
+    cap.set(cv.CAP_PROP_FPS, fps)
+
+    actual_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+    actual_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+
+    fourcc = cv.VideoWriter_fourcc(*'mp4v')
+    out = cv.VideoWriter(video_path, fourcc, fps, (actual_width, actual_height))
+
+    print(f"Recording with colour detection for {record_seconds} seconds... Vial {vial_number + 1}")
+
+    current_state = "none"
+    start_time = time.time()
+    frame_index = 0
+
+    with open(csv_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["timestamp", "frame", "elapsed_s", "from_state", "to_state", "red", "yellow", "green"])
+
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                print("Can't receive frame. Exiting...")
+                break
+
+            out.write(frame)
+
+            counts = detect_colour_in_frame(frame)
+            dominant_colour = max(counts, key=counts.get)
+            dominant_pixels = counts[dominant_colour]
+            new_state = dominant_colour if dominant_pixels >= min_pixels else "none"
+
+            if new_state != current_state:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+                elapsed = round(time.time() - start_time, 3)
+                writer.writerow([
+                    timestamp,
+                    frame_index,
+                    elapsed,
+                    current_state,
+                    new_state,
+                    counts["red"],
+                    counts["yellow"],
+                    counts["green"],
+                ])
+                current_state = new_state
+
+            frame_index += 1
+            if time.time() - start_time > record_seconds:
+                break
+
+    cap.release()
+    out.release()
+    cv.destroyAllWindows()
+
+    print(f"Video saved to: {video_path}")
+    print(f"Colour change log saved to: {csv_path}")
+
+#if __name__ == "__main__":
+#    basic_recorder()
 
 #############
 # Positions #
@@ -102,13 +267,13 @@ def main():
     
     #home
     
+    # Go to the home position before the loop
+    joint_state=home_position
+    robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
+    gripper.move(0,255,255) ## open
     
-    for i in range(3):
-        
-        # Goes to the home position every iteration
-        joint_state=home_position
-        robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
-        gripper.move(0,255,255) ## open
+    # Pick vials, put on stirr and place back to the plate
+    for i in range(4):
         
         # Reaches for the vial i
         joint_state=unreacted_approach_high[i]
@@ -117,7 +282,7 @@ def main():
         joint_state=unreacted_insert[i]
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
     
-        gripper.move(255,255,255) # close grip
+        gripper.move(170,255,255) # close grip
         
         # Moves to the stirrer
         
@@ -133,23 +298,38 @@ def main():
         joint_state=stirring_position_on
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
         
+        
+        ## ROBOT STOPS MOVING - SLEEP 
+        #time.sleep(180.00)
+        
+        ## CAMERA RECORDS HERE
+        color_detection_recorder(
+            i,
+            camera_index=camera_index,
+            width=width,
+            height=height,
+            fps=fps,
+            record_seconds=record_seconds,
+        )
+        
+        
         # Goes home and then returns the vial
         
         joint_state=home_position
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
         
-        joint_state=reacted_approach_high[i]
+        joint_state=unreacted_approach_high[i]
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
         
-        joint_state=reacted_approach_low[i]
+        joint_state=unreacted_approach_low[i]
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
         
-        joint_state=reacted_insert[i]
+        joint_state=unreacted_insert[i]
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
         
         gripper.move(0,255,255)
         
-        joint_state=reacted_approach_high[i]
+        joint_state=unreacted_approach_high[i]
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
    
     
@@ -159,7 +339,21 @@ def main():
 # END #
 #######
 
- 
+
+
+
+
+############
+############
+
+
+
+
+#####
+# % #
+#####
+
+
 def degreestorad(list):
      for i in range(6):
           list[i]=list[i]*(math.pi/180)
@@ -168,4 +362,3 @@ def degreestorad(list):
 
 if __name__=="__main__":
      main()
-
