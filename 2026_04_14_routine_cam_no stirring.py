@@ -27,6 +27,7 @@ import cv2 as cv
 from datetime import datetime
 import csv
 
+# new modules for stirring and camera
 from color_detection_module import detect_colour_in_frame
 from roi_color_detection_module import detect_colour_in_roi, load_roi_from_json
 from stir_session_module import connect_plate, run_stir_session
@@ -34,8 +35,6 @@ from stir_session_module import connect_plate, run_stir_session
 ##################
 # VIDEO SETTINGS #
 ##################
-
-video_name = '14 Apr vials.mp4'
 
 fps = 30.0
 delay = 30.0 / fps
