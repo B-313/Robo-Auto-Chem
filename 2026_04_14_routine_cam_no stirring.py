@@ -22,32 +22,36 @@ from utils.UR_Functions import URfunctions as URControl
 # sys.path.append(current_dir)
 from utils.robotiq_gripper import RobotiqGripper
 
+import threading
 import cv2 as cv
 from datetime import datetime
 import csv
 
 from color_detection_module import detect_colour_in_frame
 from roi_color_detection_module import detect_colour_in_roi, load_roi_from_json
-from stirring_plate import IKADriver
+from stir_session_module import connect_plate, run_stir_session
 
 ##################
 # VIDEO SETTINGS #
 ##################
 
-video_name = 'hello.mp4'
+video_name = '14 Apr vials.mp4'
 
 fps = 30.0
 delay = 30.0 / fps
 width = 1280
 height = 720
 camera_index = 0
-record_seconds = 5   # recording duration
+record_seconds = 120   # recording duration
 
-# Stirring plate settings (timed ON/OFF while vial is on stirrer)
+##################
+# STIRRING PLATE SETTINGS #
+##################
+
 STIR_PORT = "/dev/ttyACM0"
-STIR_RPM = 600
+STIR_RPM = 700
 STIR_TEMP = 25    # degrees Celsius; set to None to disable heating
-STIR_SECONDS = 180
+STIR_SECONDS = 30
 
 # 1280x720 is HD
 
@@ -118,8 +122,9 @@ def color_detection_recorder(
     width=640,
     height=480,
     fps=30,
-    record_seconds=10,
+    record_seconds=600,   # hard cap safety limit in seconds
     min_pixels=800,
+    stop_event=None,      # set() this externally to stop recording
 ):
     output_dir = "/home/robot/group_B/robo_chem_504/group_B_videos"
     video_path = f"{output_dir}/{vial_number+1}.mp4"
@@ -207,6 +212,8 @@ def color_detection_recorder(
                 current_state = new_state
 
             frame_index += 1
+            if stop_event is not None and stop_event.is_set():
+                break
             if time.time() - start_time > record_seconds:
                 break
 
@@ -291,11 +298,7 @@ def main():
     gripper.connect("192.168.0.2", 63352)
 
     # Stirring plate init (one-time); if unavailable, routine continues without stirring control.
-    plate = None
-    try:
-        plate = IKADriver(STIR_PORT)
-    except Exception as e:
-        print(f"Stirring plate init failed: {e}")
+    plate = connect_plate(STIR_PORT)
 #   gripper.move(255,125,125)
 #     joint_state=degreestorad([93.77,-89.07,89.97,-90.01,-90.04,0.0])
 #     robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
@@ -343,37 +346,48 @@ def main():
         ############################
         # STIRRING + CAMERA - START
         ############################
-        if plate is not None:
-            plate.run_stir_session(STIR_RPM, STIR_SECONDS, temp=STIR_TEMP)
-        else:
-            color_detection_recorder(
-                i,
+        # Camera starts when vial is placed. Stirrer runs then stops.
+        # Recording continues until gripper picks vial back up.
+        stop_recording = threading.Event()
+
+        recorder_thread = threading.Thread(
+            target=color_detection_recorder,
+            kwargs=dict(
+                vial_number=i,
                 camera_index=camera_index,
                 width=width,
                 height=height,
                 fps=fps,
-                record_seconds=STIR_SECONDS,
-            )
+                stop_event=stop_recording,
+            ),
+            daemon=True,
+        )
+        recorder_thread.start()
+
+        # Stirrer heats and stirs for STIR_SECONDS then stops.
+        run_stir_session(plate, STIR_RPM, STIR_SECONDS, temp=STIR_TEMP)
         ############################
         # STIRRING + CAMERA - END
         ############################
-        
+
         # Goes home and then returns the vial
-        
+
         joint_state=home_position
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
-        
+
         joint_state=unreacted_approach_high[i]
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
-        
+
         joint_state=unreacted_approach_low[i]
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
-        
+
         joint_state=unreacted_insert[i]
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
-        
-        gripper.move(0,255,255)
-        
+
+        gripper.move(0,255,255)   # vial released back in rack
+        stop_recording.set()       # vial removed - stop camera
+        recorder_thread.join(timeout=10)
+
         joint_state=unreacted_approach_high[i]
         robot.move_joint_list(joint_state, 0.5, 0.5, 0.02)
    
@@ -387,16 +401,8 @@ def main():
 
 
 
-
 ############
 ############
-
-
-
-
-#####
-# % #
-#####
 
 
 def degreestorad(list):
