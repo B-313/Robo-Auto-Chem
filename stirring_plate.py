@@ -45,6 +45,20 @@ class IKADriver:
         time.sleep(0.1)
         self.startStir()
 
+    def run_stir_session(self, rpm, duration_seconds, temp=None):
+        # Start stirring and optional heating, wait, then stop both safely.
+        try:
+            self.setStir(rpm)
+            self.startStir()
+            if temp is not None:
+                self.setHeat(temp)
+                self.startHeat()
+            time.sleep(duration_seconds)
+        finally:
+            self.stopStir()
+            if temp is not None:
+                self.stopHeat()
+
     # HEAT CONTROL # not tried yet
 
     def startHeat(self):

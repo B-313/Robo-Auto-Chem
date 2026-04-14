@@ -343,9 +343,16 @@ def main():
         ############################
         # STIRRING + CAMERA - START
         ############################
-        if plate is not None:
-            plate.run_stir_session(STIR_RPM, STIR_SECONDS, temp=STIR_TEMP)
-        else:
+        # Timed stirring section: start stir when vial is placed, always stop safely.
+        try:
+            if plate is not None:
+                plate.setStir(STIR_RPM)
+                plate.startStir()
+                if STIR_TEMP is not None:
+                    plate.setHeat(STIR_TEMP)
+                    plate.startHeat()
+
+            # Camera records during the stirring window.
             color_detection_recorder(
                 i,
                 camera_index=camera_index,
@@ -354,6 +361,15 @@ def main():
                 fps=fps,
                 record_seconds=STIR_SECONDS,
             )
+        finally:
+            if plate is not None:
+                try:
+                    plate.stopStir()
+                    if STIR_TEMP is not None:
+                        plate.stopHeat()
+                except Exception as e:
+                    print(f"Stirring plate stop failed: {e}")
+        
         ############################
         # STIRRING + CAMERA - END
         ############################
