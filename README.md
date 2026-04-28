@@ -4,13 +4,12 @@ This project integrates the automation of vial handling, plate control, and data
 
 # Project file system structure
 
-.
-├── main.py
-├── manual_move.py
-├── notes/
-│   ├── demo_insights.md
-│   └── lab_notes.md
-└── utils/
+main.py
+manual_move.py
+notes/
+|-- demo_insights.md
+`-- lab_notes.md
+utils/
 
 # Usage
 
