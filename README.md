@@ -1,6 +1,8 @@
-# Robo-Auto-Chem
+# Chemistry Automation
 
-# robo_chem_504 - GROUP B
+This project integrates the automation of vial handling, plate control, and data collection of the red-light reaction. Computer vision with YOLO is used to gather and analyse visual data.
+
+# Project file system structure
 
 **Test_position.py** is the main file that handles the robotic arm.
 
@@ -8,17 +10,25 @@
 
 **plate_control_pablo.py** defines the class for the plate and contains an example for usage
 
+# Usage
 
-## **Activate the environment with:**
+## Create and activate the UR5e environment:
 
-Env
+### Activation
 ```sh
 conda activate /home/robot/anaconda3/envs/ur5
 ```
 
- 
+## Usage of movement sequences
+
+Just call the files from the terminal:
 ```sh
-python3 chem504-robot-tools-groupB/<path-to-file>
+python3 chem504-robot-tools-groupB/<path_to_file>
+
+```
+
+Examples:
+```sh
 python3 chem504-robot-tools-groupB/full_routine_100326
 python3 chem504-robot-tools-groupB/untested_full_routine
 python3 chem504-robot-tools-groupB/untested_full_routine.py
