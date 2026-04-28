@@ -14,9 +14,8 @@ This project integrates the automation of vial handling, plate control, and data
 
 # Usage
 
-## Create and activate the UR5e environment:
+## Activate the UR5e environment:
 
-### Activation
 ```sh
 conda activate /home/robot/anaconda3/envs/ur5
 ```
