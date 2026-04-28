@@ -7,3 +7,6 @@ TODO
 - Add clean data
     - Examples of processed .csv files, and plots []
     - If possible, zip and upload videos []
+
+- Update file tree []
+- Render file tree properly []
