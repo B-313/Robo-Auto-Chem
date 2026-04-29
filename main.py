@@ -2,7 +2,15 @@
 # FULL ROUTINE #
 ################
 
-# Current Routine: Place vial on stirrer → Camera takes one photo → Record 150s → Stir 60s → Pick up Vial → Loop 4 times for 4 vials
+# Current Routine: 
+#   Pick up vial
+#   Place vial on stirrer 
+#   Camera takes one photo 
+#   Sleep 1s
+#   Record 150s + Stir 60s
+#   Pick up Vial
+#
+# Loop 4 times for 4 vials
 
 ##########
 # CONFIG #
@@ -11,8 +19,8 @@ ROBOT_IP       = "192.168.0.2" #HOST
 GRIPPER_PORT   = 63352 #PORT
 PLATE_PORT     = "/dev/ttyACM0" #STIR PLATE PORT
 VIDEO_DIR      = "/home/robot/group_B/robo_chem_504/group_B_videos"
-RECORD_SECONDS = 180
-STIR_SECONDS   = 60
+RECORD_SECONDS = 190
+STIR_SECONDS   = 15
 STIR_RPM       = 1300
 NUM_VIALS      = 4
 

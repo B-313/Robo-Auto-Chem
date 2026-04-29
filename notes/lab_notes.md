@@ -44,3 +44,9 @@ Weird custom recipe
 3.5 mL NaOH
 1.5 mL Glucose
 4 Indicator
+
+## Recipe 7 (Used in video demonstration)
+3 mL NaOH
+2 mL Glucose
+10 Indicator
+- *Use little volume to guarantee the reaction*
