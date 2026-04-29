@@ -103,109 +103,122 @@ stirring_position_above = [1.118363857269287, -1.286565975551941, 1.377596680318
 # CAMERA / PHOTO #
 ##################
 def take_photo(vial_number, camera_index=0):
-output_path = f"/home/robot/group_B/robo_chem_504/group_B_videos/snapp_of_vial_{vial_number+1}_photo.jpg"
-cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)
-ret, frame = cap.read()
-if ret:
-cv.imwrite(output_path, frame)
-print(f"Photo saved: {output_path}")
-cap.release()
+    output_path = f"/home/robot/group_B/robo_chem_504/group_B_videos/batch1_reaction_1_vial_{vial_number+1}_photo.jpg"
+    cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)
+    ret, frame = cap.read()
+    if ret:
+        cv.imwrite(output_path, frame)
+        print(f"Photo saved: {output_path}")
+    cap.release()
 
 def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, record_seconds=180):
-output_path = f"/home/robot/group_B/robo_chem_504/group_B_videos/halved_proper_test_recipe_7_{vial_number+1}.mp4"
-os.makedirs(os.path.dirname(output_path), exist_ok=True) # ensure dir exists
-cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)
-cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
-cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
-cap.set(cv.CAP_PROP_FPS, fps)
+    output_path = f"/home/robot/group_B/robo_chem_504/group_B_videos/batch1_reaction_1_vial_{vial_number+1}.mp4"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)  # ensure dir exists
+    cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
+    cap.set(cv.CAP_PROP_FPS, fps)
 
-actual_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
-actual_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
-print(f"Recording vial {vial_number+1} at {actual_width}x{actual_height} for {record_seconds}s → {output_path}")
+    actual_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+    actual_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+    print(f"Recording vial {vial_number+1} at {actual_width}x{actual_height} for {record_seconds}s → {output_path}")
 
-out = cv.VideoWriter(output_path, cv.VideoWriter_fourcc(*'mp4v'), fps, (actual_width, actual_height))
+    out = cv.VideoWriter(output_path, cv.VideoWriter_fourcc(*'mp4v'), fps, (actual_width, actual_height))
 
-start_time = time.time()
-while time.time() - start_time < record_seconds:
-ret, frame = cap.read()
-if not ret:
-print("Frame capture failed.")
-break
-out.write(frame)
+    start_time = time.time()
+    while time.time() - start_time < record_seconds:
+        ret, frame = cap.read()
+        if not ret:
+            print("Frame capture failed.")
+            break
+        out.write(frame)
 
-cap.release()
-out.release()
-print(f"Saved: {output_path}")
+    cap.release()
+    out.release()
+    print(f"Saved: {output_path}")
+    
 ###########
 # STIRRER #
 ###########
 
 def connect_plate(port):
-try:
-plate = IKADriver(port)
-print(f"Stirring plate connected on {port}")
-return plate
-except Exception as e:
-print(f"Stirring plate init failed: {e}")
-return None
+    try:
+        plate = IKADriver(port)
+        print(f"Stirring plate connected on {port}")
+        return plate
+    except Exception as e:
+        print(f"Stirring plate init failed: {e}")
+        return None
+    
 def stir_then_stop(plate, rpm, stir_seconds):
-# Runs in background thread — stirs for stir_seconds then stops
-if plate is None:
-return
-plate.setStir(rpm)
-plate.startStir()
-time.sleep(stir_seconds)
-plate.stopStir()
+    # Runs in background thread — stirs for stir_seconds then stops
+    if plate is None:
+        return
+    plate.setStir(rpm)
+    plate.startStir()
+    time.sleep(stir_seconds)
+    plate.stopStir()
 
 ##################
-# ORCHESTRATION #
+# ORCHESTRATION  #
 ##################
 
 def record_with_stir(plate, vial_number, rpm, total_seconds=180, stir_seconds=60):
-# Start stir in background
-stir_thread = threading.Thread(target=stir_then_stop, args=(plate, rpm, stir_seconds))
-time.sleep(1)
-stir_thread.start()
-# Record full duration in main thread
-basic_recorder(vial_number, record_seconds=total_seconds)
-stir_thread.join()
+    # Start stir in background
+    stir_thread = threading.Thread(target=stir_then_stop, args=(plate, rpm, stir_seconds))
+    time.sleep(1) # Wait a second before stirring
+    stir_thread.start()
+    
+    # Record full duration in main thread
+    basic_recorder(vial_number, record_seconds=total_seconds)
+    
+    stir_thread.join()
 
 
 def run_vial(i, robot, gripper, plate):
-gripper.move(0,255,255) ## opens gripper at the start, make sure there is no vial in the gripper at the start of the routine
-# Pick vial
-robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
-robot.move_joint_list(unreacted_insert[i], 0.5, 0.5, 0.02)
-gripper.move(170, 255, 255)
+    # Pick vial
+    robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
+    robot.move_joint_list(unreacted_insert[i], 0.5, 0.5, 0.02)
+    gripper.move(170, 255, 255) # close gripper
 
-# Move to stirrer
-robot.move_joint_list(unreacted_approach_low[i], 0.5, 0.5, 0.02)
-robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
-robot.move_joint_list(stirring_position_above, 0.5, 0.5, 0.02)
-robot.move_joint_list(stirring_position_on, 0.5, 0.5, 0.02)
+    # Move to stirrer
+    robot.move_joint_list(unreacted_approach_low[i], 0.5, 0.5, 0.02)
+    robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
+    robot.move_joint_list(stirring_position_above, 0.5, 0.5, 0.02)
+    robot.move_joint_list(stirring_position_on, 0.5, 0.5, 0.02)
 
-# Photo + record
-take_photo(i)
-record_with_stir(plate, i, rpm=STIR_RPM, total_seconds=RECORD_SECONDS, stir_seconds=STIR_SECONDS)
+    # Photo + record
+    take_photo(i)
+    record_with_stir(plate, i, rpm=STIR_RPM, total_seconds=RECORD_SECONDS, stir_seconds=STIR_SECONDS)
 
-# Return vial
-robot.move_joint_list(home_position, 0.5, 0.5, 0.02)
-robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
-robot.move_joint_list(unreacted_approach_low[i], 0.5, 0.5, 0.02)
-robot.move_joint_list(unreacted_insert[i], 0.5, 0.5, 0.02)
-gripper.move(0, 255, 255)
-robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
+    # Return vial
+    robot.move_joint_list(home_position, 0.5, 0.5, 0.02)
+    robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
+    robot.move_joint_list(unreacted_approach_low[i], 0.5, 0.5, 0.02)
+    robot.move_joint_list(reacted_approach, 0.5, 0.5, 0.02)
+    robot.move_joint_list(reacted_insert[i], 0.5, 0.5, 0.02)
+    gripper.move(0, 255, 255) # open gripper
+    robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
+
+manual_vial = 3
 
 ########
 # MAIN #
 ########
 def main():
-robot = URControl(ip=ROBOT_IP)
-gripper = RobotiqGripper(); gripper.connect(ROBOT_IP, GRIPPER_PORT)
-plate = connect_plate(PLATE_PORT)
+    robot  = URControl(ip=ROBOT_IP)
+    gripper = RobotiqGripper(); gripper.connect(ROBOT_IP, GRIPPER_PORT)
+    plate  = connect_plate(PLATE_PORT)
 
-for i in range(NUM_VIALS):
-run_vial(i, robot, gripper, plate)
+    for i in range(NUM_VIALS):
+        run_vial(i, robot, gripper, plate)
+    #robot.move_joint_list(unreacted_approach_high[manual_vial], 0.5, 0.5, 0.02)
+    #robot.move_joint_list(unreacted_approach_low[manual_vial], 0.5, 0.5, 0.02)
+    #robot.move_joint_list(unreacted_insert[manual_vial], 0.5, 0.5, 0.02) 
+    #gripper.move(170, 255, 255) # close gripper
+    #gripper.move(0,255,255) ## open
+
+    robot.move_joint_list(home_position, 0.5, 0.5, 0.02)
 
 if __name__ == "__main__":
-main()
+    main()
