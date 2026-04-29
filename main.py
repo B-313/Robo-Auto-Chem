@@ -7,7 +7,7 @@
 #   Place vial on stirrer 
 #   Camera takes one photo 
 #   Sleep 1s
-#   Record 150s + Stir 60s
+#   Record 190s + Stir 15s
 #   Pick up Vial
 #
 # Loop 4 times for 4 vials
@@ -177,6 +177,7 @@ def record_with_stir(plate, vial_number, rpm, total_seconds=180, stir_seconds=60
 
 def run_vial(i, robot, gripper, plate):
     # Pick vial
+    ripper.move(0, 255, 255) # open gripper (make sure the robot is not holding a vial)
     robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
     robot.move_joint_list(unreacted_insert[i], 0.5, 0.5, 0.02)
     gripper.move(170, 255, 255) # close gripper
