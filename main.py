@@ -2,15 +2,7 @@
 # FULL ROUTINE #
 ################
 
-# Current Routine: 
-#   Pick up vial
-#   Place vial on stirrer 
-#   Camera takes one photo 
-#   Sleep 1s
-#   Record 190s + Stir 15s
-#   Pick up Vial
-#
-# Loop 4 times for 4 vials
+# Current Routine: Place vial on stirrer → Camera takes one photo → Record 150s → Stir 60s → Pick up Vial → Loop 4 times for 4 vials
 
 ##########
 # CONFIG #
@@ -20,8 +12,8 @@ GRIPPER_PORT   = 63352 #PORT
 PLATE_PORT     = "/dev/ttyACM0" #STIR PLATE PORT
 VIDEO_DIR      = "/home/robot/group_B/robo_chem_504/group_B_videos"
 RECORD_SECONDS = 190
-STIR_SECONDS   = 15
-STIR_RPM       = 1300
+STIR_SECONDS   = 20
+STIR_RPM       = 1500
 NUM_VIALS      = 4
 
 ###########
@@ -72,28 +64,48 @@ unreacted_insert = [
 
 # After reacting
 
-reacted_insert = [ # updated
-    [1.755118489265442, -1.622995515862936, 2.3268495241748255, -2.300579687158102, -1.5604632536517542, 0.15620261430740356],
-    [1.7368957996368408, -1.5046419662288208, 2.2058165709124964, -2.29784693340444, -1.5600035826312464, 0.1383223533630371],
-    [1.8499835729599, -1.508009986286499, 2.2097938696490687, -2.29905428508901, -1.5630114714251917, 0.2513377368450165],
-    [1.8210809230804443, -1.3954226535609742, 2.0836508909808558, -2.285426279107565, -1.5622661749469202, 0.22260428965091705]
+exhauted_approach_high = [[1.4711607694625854, -1.729419847527975, 2.3005879561053675, -2.1649967632689417, -1.5527351538287562, -0.12832719484438115],
+                          [1.461242914199829, -1.826648851434225, 2.3842182795154017, -2.1513544521727503, -1.5524557272540491, -0.13839942613710576],
+                          [1.886932611465454, -1.6541978321471156, 2.006794277821676, -1.949963232079977, -1.5626638571368616, 0.28678539395332336],
+                          [1.9119048118591309, -1.7283650837340296, 2.0814393202411097, -1.9505115948119105, -1.5633629004107874, 0.3116168975830078]
+    
 ]
 
-reacted_approach = [1.757645845413208, -1.6042686901488246, 2.0646565596209925, -2.0572530231871546, -1.559568230305807, 0.15809589624404907]
+exhauted_approach_low = [[1.471045732498169, -1.6876474819579066, 2.336992327366964, -2.2431241474547328, -1.5530813376056116, -0.12810308138002569],
+                         [1.4611554145812988, -1.782081743279928, 2.4229098002063196, -2.2346278629698695, -1.5528138319598597, -0.1381438414203089],
+                         [1.8866541385650635, -1.5190337349525471, 2.175055805836813, -2.253425260583395, -1.5637877623187464, 0.2878590226173401],
+                         [1.9116365909576416, -1.5874926052489222, 2.2529290358172815, -2.262961050073141, -1.5645421187030237, 0.3126955032348633]
+                         
+]
 
-#reacted_approach_low = [
-#    [1.7736990451812744, -1.716959138909811, 2.4054392019854944, -2.2853337726988734, -1.5608862082110804, 0.1745983064174652],
-#    [1.7508206367492676, -1.5886441669859828, 2.296417538319723, -2.3044830761351527, -1.5603516737567347, 0.1520262062549591],
-#    [1.8768328428268433, -1.5930525265135707, 2.2924214045154017, -2.296755929986471, -1.563714329396383, 0.2780013084411621],
-#    [1.8435415029525757, -1.483963669543602, 2.179882828389303, -2.293112417260641, -1.5628193060504358, 0.2449340671300888]
-#]
-#
-#reacted_approach_high = [
-#    [1.7739837169647217, -1.8434292278685511, 2.2804930845843714, -2.033940454522604, -1.5599435011493128, 0.1738280951976776],
-#    [1.751039981842041, -1.6982251606383265, 2.1973212401019495, -2.095750471154684, -1.5595305601703089, 0.15137901902198792],
-#    [1.877051830291748, -1.7067915401854457, 2.1848610083209437, -2.075393339196676, -1.562838379536764, 0.2773132920265198],
-#    [1.8437175750732422, -1.5870100460448207, 2.0843218008624476, -2.0945011578001917, -1.5619915167437952, 0.24426542222499847]
-#]
+exhauted_insert = [
+    [1.470982313156128, -1.6536113224425257, 2.361356560383932, -2.3016063175597132, -1.5533021132098597, -0.12793237367738897],
+    [1.4610836505889893, -1.7513462505736292, 2.4449361006366175, -2.2873412571349085, -1.5529988447772425, -0.13799745241274053],
+    [1.8866300582885742, -1.4920480784824868, 2.1945555845843714, -2.2998458347716273, -1.564014736806051, 0.2880030870437622],
+    [1.9115538597106934, -1.5526053880206128, 2.277067009602682, -2.321963449517721, -1.5647676626788538, 0.31282931566238403]                        
+    
+]
+
+reacted_insert = [ # Deprecated - we are not inserting after reaction in this routine, but keeping for reference
+    [1.7736680507659912, -1.7024322948851527, 2.415126625691549, -2.309547563592428, -1.5609906355487269, 0.17467042803764343],
+    [1.7508153915405273, -1.570087658449058, 2.3082061449633997, -2.3348666630186976, -1.5605104605304163, 0.15212920308113098],
+    [1.8768088817596436, -1.5697949928329145, 2.307462278996603, -2.3350564442076625, -1.5638979117022913, 0.2781129479408264],
+    [1.8435537815093994, -1.460801677112915, 2.194772545491354, -2.3312183819212855, -1.5629757086383265, 0.24502253532409668]
+]
+
+reacted_approach_low = [
+    [1.7736990451812744, -1.716959138909811, 2.4054392019854944, -2.2853337726988734, -1.5608862082110804, 0.1745983064174652],
+    [1.7508206367492676, -1.5886441669859828, 2.296417538319723, -2.3044830761351527, -1.5603516737567347, 0.1520262062549591],
+    [1.8768328428268433, -1.5930525265135707, 2.2924214045154017, -2.296755929986471, -1.563714329396383, 0.2780013084411621],
+    [1.8435415029525757, -1.483963669543602, 2.179882828389303, -2.293112417260641, -1.5628193060504358, 0.2449340671300888]
+]
+
+reacted_approach_high = [
+    [1.7739837169647217, -1.8434292278685511, 2.2804930845843714, -2.033940454522604, -1.5599435011493128, 0.1738280951976776],
+    [1.751039981842041, -1.6982251606383265, 2.1973212401019495, -2.095750471154684, -1.5595305601703089, 0.15137901902198792],
+    [1.877051830291748, -1.7067915401854457, 2.1848610083209437, -2.075393339196676, -1.562838379536764, 0.2773132920265198],
+    [1.8437175750732422, -1.5870100460448207, 2.0843218008624476, -2.0945011578001917, -1.5619915167437952, 0.24426542222499847]
+]
 
 # stir plate
 stirring_position_on = [1.118239164352417, -1.210919664507248, 1.617370907460348, -1.9941722355284632, -1.5449407736407679, -0.48071128526796514]
@@ -104,7 +116,7 @@ stirring_position_above = [1.118363857269287, -1.286565975551941, 1.377596680318
 # CAMERA / PHOTO #
 ##################
 def take_photo(vial_number, camera_index=0):
-    output_path = f"/home/robot/group_B/robo_chem_504/group_B_videos/batch1_reaction_1_vial_{vial_number+1}_photo.jpg"
+    output_path = f"/home/robot/group_B/robo_chem_504/group_B_videos/superdemo_snapp_of_vial_{vial_number+1}_photo.jpg"
     cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)
     ret, frame = cap.read()
     if ret:
@@ -113,7 +125,7 @@ def take_photo(vial_number, camera_index=0):
     cap.release()
 
 def basic_recorder(vial_number, camera_index=0, width=640, height=480, fps=30, record_seconds=180):
-    output_path = f"/home/robot/group_B/robo_chem_504/group_B_videos/batch1_reaction_1_vial_{vial_number+1}.mp4"
+    output_path = f"/home/robot/group_B/robo_chem_504/group_B_videos/superdemo_recipe_7_{vial_number+1}.mp4"
     os.makedirs(os.path.dirname(output_path), exist_ok=True)  # ensure dir exists
     cap = cv.VideoCapture(camera_index, cv.CAP_V4L2)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
@@ -167,6 +179,7 @@ def stir_then_stop(plate, rpm, stir_seconds):
 def record_with_stir(plate, vial_number, rpm, total_seconds=180, stir_seconds=60):
     # Start stir in background
     stir_thread = threading.Thread(target=stir_then_stop, args=(plate, rpm, stir_seconds))
+    time.sleep(1) # slight delay to ensure stir starts before recording
     stir_thread.start()
     
     # Record full duration in main thread
@@ -176,11 +189,13 @@ def record_with_stir(plate, vial_number, rpm, total_seconds=180, stir_seconds=60
 
 
 def run_vial(i, robot, gripper, plate):
+    
+    gripper.move(0,255,255) ## opens gripper at the start, make sure there is no vial in the gripper at the start of the routine
+    
     # Pick vial
-    ripper.move(0, 255, 255) # open gripper (make sure the robot is not holding a vial)
     robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
     robot.move_joint_list(unreacted_insert[i], 0.5, 0.5, 0.02)
-    gripper.move(170, 255, 255) # close gripper
+    gripper.move(170, 255, 255)
 
     # Move to stirrer
     robot.move_joint_list(unreacted_approach_low[i], 0.5, 0.5, 0.02)
@@ -189,19 +204,16 @@ def run_vial(i, robot, gripper, plate):
     robot.move_joint_list(stirring_position_on, 0.5, 0.5, 0.02)
 
     # Photo + record
-    #take_photo(i)
-    #record_with_stir(plate, i, rpm=STIR_RPM, total_seconds=RECORD_SECONDS, stir_seconds=STIR_SECONDS)
+    take_photo(i)
+    record_with_stir(plate, i, rpm=STIR_RPM, total_seconds=RECORD_SECONDS, stir_seconds=STIR_SECONDS)
 
     # Return vial
     robot.move_joint_list(home_position, 0.5, 0.5, 0.02)
-    #robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
-    #robot.move_joint_list(unreacted_approach_low[i], 0.5, 0.5, 0.02)
-    robot.move_joint_list(reacted_approach, 0.5, 0.5, 0.02)
-    robot.move_joint_list(reacted_insert[i], 0.5, 0.5, 0.02)
-    gripper.move(0, 255, 255) # open gripper
+    robot.move_joint_list(exhauted_approach_high[i], 0.5, 0.5, 0.02)
+    robot.move_joint_list(exhauted_approach_low[i], 0.5, 0.5, 0.02)
+    robot.move_joint_list(exhauted_insert[i], 0.5, 0.5, 0.02)
+    gripper.move(0, 255, 255)
     robot.move_joint_list(unreacted_approach_high[i], 0.5, 0.5, 0.02)
-
-manual_vial = 3
 
 ########
 # MAIN #
@@ -213,13 +225,6 @@ def main():
 
     for i in range(NUM_VIALS):
         run_vial(i, robot, gripper, plate)
-    #robot.move_joint_list(unreacted_approach_high[manual_vial], 0.5, 0.5, 0.02)
-    #robot.move_joint_list(unreacted_approach_low[manual_vial], 0.5, 0.5, 0.02)
-    #robot.move_joint_list(unreacted_insert[manual_vial], 0.5, 0.5, 0.02) 
-    #gripper.move(170, 255, 255) # close gripper
-    #gripper.move(0,255,255) ## open
-
-    robot.move_joint_list(home_position, 0.5, 0.5, 0.02)
 
 if __name__ == "__main__":
     main()
