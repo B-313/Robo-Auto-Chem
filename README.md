@@ -61,3 +61,11 @@ The current output paths for the photo snaps and video recordings on `main.py` a
 
 
 [File tree designer used](https://tree.nathanfriend.com/?s=(%27options!(%27fancy-~fullPath!false~trailingSlash-~rootDot-)~2(%272%27main3manual_move3notes%2F0demo_insights.md0lab_notes.md*utils%2F%27)~version!%271%27)*%5Cn-!true0*%20%202source!3.py*%01320-*)
+
+# Documentation
+
+| Document | Description |
+|---|---|
+| [Academic Supplement Poster](docs/academic_supplement_poster.md) | One-page printable academic supplement for Demo Day 2026 — system overview, Mermaid workflow diagram, data artifacts, and reproducibility notes |
+| [Demo Insights](notes/demo_insights.md) | Workflow walkthrough, key chemistry principles, and CSV data mapping |
+| [Lab Notes](notes/lab_notes.md) | Reagent recipes and session notes |
