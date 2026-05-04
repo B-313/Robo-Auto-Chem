@@ -5,3 +5,7 @@ batch_results/
 *.pt
 *.mp4
 *.mov
+
+# Generated docs output (export locally; do not commit)
+docs/*.pdf
+docs/*.html

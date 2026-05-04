@@ -61,3 +61,10 @@ The current output paths for the photo snaps and video recordings on `main.py` a
 
 
 [File tree designer used](https://tree.nathanfriend.com/?s=(%27options!(%27fancy-~fullPath!false~trailingSlash-~rootDot-)~2(%272%27main3manual_move3notes%2F0demo_insights.md0lab_notes.md*utils%2F%27)~version!%271%27)*%5Cn-!true0*%20%202source!3.py*%01320-*)
+
+# Documentation
+
+| Document | Description |
+|---|---|
+| [`docs/linkedin_post.md`](docs/linkedin_post.md) | LinkedIn post draft (Option A professional / Option B concise) incorporating the 7-phase digital workflow |
+| [`docs/export_to_pdf.md`](docs/export_to_pdf.md) | Instructions for exporting any `docs/` Markdown file to PDF using `pandoc` |
