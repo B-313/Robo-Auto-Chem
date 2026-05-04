@@ -2,6 +2,8 @@
 
 This project integrates the automation of vial handling, plate control, and data collection of the red-light reaction. Computer vision with YOLO is used to gather and analyse visual data.
 
+📄 **[Academic Supplement Poster (CHEM504 Demo Day 2026)](docs/academic_supplement_poster.md)** — one-page overview of the implemented workflow, data artifacts, methods, and reproducibility.
+
 # Project file system structure
 
 ```
