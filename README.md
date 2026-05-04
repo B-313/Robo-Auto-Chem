@@ -61,3 +61,12 @@ The current output paths for the photo snaps and video recordings on `main.py` a
 
 
 [File tree designer used](https://tree.nathanfriend.com/?s=(%27options!(%27fancy-~fullPath!false~trailingSlash-~rootDot-)~2(%272%27main3manual_move3notes%2F0demo_insights.md0lab_notes.md*utils%2F%27)~version!%271%27)*%5Cn-!true0*%20%202source!3.py*%01320-*)
+
+# Documentation
+
+| Document | Description |
+|---|---|
+| [`docs/digital_workflow.md`](docs/digital_workflow.md) | End-to-end 7-phase digital workflow with embedded Mermaid flowchart |
+| [`docs/digital_workflow_flowchart.md`](docs/digital_workflow_flowchart.md) | Standalone Mermaid flowchart of the 7-phase workflow |
+| [`docs/linkedin_post_academic.md`](docs/linkedin_post_academic.md) | Academic LinkedIn post draft (workflow rigor & traceability) |
+| [`notes/demo_insights.md`](notes/demo_insights.md) | Demo insights: workflow, chemistry principles, CSV data mapping |
