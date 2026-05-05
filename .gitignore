@@ -5,3 +5,5 @@ batch_results/
 *.pt
 *.mp4
 *.mov
+labeling/labelling_output/
+labeling/training_data/
